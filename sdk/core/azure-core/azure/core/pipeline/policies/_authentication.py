@@ -9,6 +9,7 @@ import time
 import six
 
 from . import HTTPPolicy, SansIOHTTPPolicy
+from .._tools import await_result
 from ...exceptions import ServiceRequestError
 
 try:
@@ -107,13 +108,33 @@ class BearerTokenCredentialPolicy(_BearerTokenCredentialPolicyBase, HTTPPolicy):
     :raises: :class:`~azure.core.exceptions.ServiceRequestError`
     """
 
+    def on_request(self, request):
+        """This method is for backward compatibility and is not called"""
+
+    def on_response(self, request, response):
+        """This method is for backward compatibility and is not called"""
+
+    def on_exception(self, request):
+        """This method is for backward compatibility and is not called"""
+
     def send(self, request):
         # type: (PipelineRequest) -> PipelineResponse
         """Adds a bearer token Authorization header to request and sends request to next policy.
 
-        :param request: The pipeline request object
-        :type request: ~azure.core.pipeline.PipelineRequest
+        :param ~azure.core.pipeline.PipelineRequest request: The request
         """
+        await_result(self.on_request, request)
+        try:
+            response = self._send(request)
+        except Exception:  # pylint: disable=broad-except
+            if not await_result(self.on_exception, request):
+                raise
+        else:
+            await_result(self.on_response, request, response)
+        return response
+
+    def _send(self, request):
+        # type: (PipelineRequest) -> PipelineResponse
         self._enforce_https(request)
 
         if self._token is None or self._need_new_token:
