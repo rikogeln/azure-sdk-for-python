@@ -145,32 +145,36 @@ class BearerTokenCredentialPolicy(_BearerTokenCredentialPolicyBase, HTTPPolicy):
 
         if response.http_response.status_code == 401:
             self._token = None  # any cached token is invalid
-            challenge = response.http_response.headers.get("WWW-Authenticate", "")
-            if challenge:
-                request.http_request.headers.pop("Authorization", None)
-                self.on_challenge(request, challenge)
-                if "Authorization" in request.http_request.headers:  # on_challenge satisfied the challenge
-                    response = self.next.send(request)
+            challenge = response.http_response.headers.get("WWW-Authenticate")
+            if challenge and self.on_challenge(request, challenge):
+                response = self.next.send(request)
 
         return response
 
     def on_challenge(self, request, www_authenticate):
-        # type: (PipelineRequest, str) -> None
+        # type: (PipelineRequest, str) -> bool
         """Authorize request according to an authentication challenge.
 
         Base implementation handles CAE claims directives. Clients expecting other challenges must override.
+
+        :return: a bool indicating whether the method satisfied the challenge
         """
 
         parsed_challenges = _get_challenges(www_authenticate)
         if len(parsed_challenges) != 1 or "claims" not in parsed_challenges[0].parameters:
             # no or multiple challenges, or no claims directive
-            return
+            return False
 
         encoded_claims = parsed_challenges[0].parameters["claims"]
         padding_needed = 4 - len(encoded_claims) % 4
-        claims = base64.urlsafe_b64decode(encoded_claims + "=" * padding_needed).decode()
+        try:
+            claims = base64.urlsafe_b64decode(encoded_claims + "=" * padding_needed).decode()
+        except Exception:  # pylint:disable=broad-except
+            return False
+
         self._token = self._credential.get_token(*self._scopes, claims_challenge=claims)
         self._update_headers(request.http_request.headers, self._token.token)
+        return True
 
 
 class AzureKeyCredentialPolicy(SansIOHTTPPolicy):
