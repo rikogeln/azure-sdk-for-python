@@ -139,19 +139,20 @@ jobs:
 
         - pwsh: |
             $packages = Get-ChildItem "$(Pipeline.Workspace)/${{ parameters.ArtifactName }}/*.zip"
+            Write-Host "Artifacts found:"
             $artifacts = $packages | ForEach-Object {
               if ($_.Name -match "([a-zA-Z\-]+)\-(.*).zip") {
+                Write-Host "$($matches[1]): $($matches[2])"
                 return @{ "name" = $matches[1]; "version" = $matches[2] }
               }
             }
-            Write-Host "Found artifacts: $artifacts"
             $dependencies = Get-Content $env:REQUIREMENTS | ForEach-Object {
               $line = $_
               if ($line -match "([a-zA-Z\-]+)(\W+)(.*)") {
                   $override = ($artifacts | Where-Object { $_.Name -eq $matches[1] }).Version
                   if ($override) {
                       $line = $line -replace '([a-zA-Z\-]+)(\W+)(.*)', ('${1}${2}' + $override)
-                      Write-Host "Overriding dependency with to: $line"
+                      Write-Host "Overriding dependency to: $line"
                   }
               }
               return $line
