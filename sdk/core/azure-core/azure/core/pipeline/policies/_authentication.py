@@ -136,10 +136,7 @@ class BearerTokenCredentialPolicy(_BearerTokenCredentialPolicyBase, HTTPPolicy):
     def _send(self, request):
         # type: (PipelineRequest) -> PipelineResponse
         self._enforce_https(request)
-
-        if self._token is None or self._need_new_token:
-            self._token = self._credential.get_token(*self._scopes)
-        self._update_headers(request.http_request.headers, self._token.token)
+        self.on_before_request(request)
 
         response = self.next.send(request)
 
@@ -150,6 +147,14 @@ class BearerTokenCredentialPolicy(_BearerTokenCredentialPolicyBase, HTTPPolicy):
                 response = self.next.send(request)
 
         return response
+
+    def on_before_request(self, request):
+        # type: (PipelineRequest) -> None
+        """Executed before sending the request"""
+
+        if self._token is None or self._need_new_token:
+            self._token = self._credential.get_token(*self._scopes)
+        self._update_headers(request.http_request.headers, self._token.token)
 
     def on_challenge(self, request, www_authenticate):
         # type: (PipelineRequest, str) -> bool
