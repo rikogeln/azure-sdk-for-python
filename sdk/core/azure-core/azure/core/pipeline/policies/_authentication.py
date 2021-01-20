@@ -37,10 +37,9 @@ AUTHENTICATION_CHALLENGE = re.compile(r'(?:(\w+) ((?:\w+=".*?"(?:, )?)+)(?:, )?)
 CHALLENGE_PARAMETER = re.compile(r'(?:(\w+)="([^"]*)")+')
 
 
-def _get_challenges(response):
-    # type: (PipelineResponse) -> List[AuthenticationChallenge]
+def _get_challenges(header):
+    # type: (str) -> List[AuthenticationChallenge]
     result = []
-    header = response.http_response.headers.get("WWW-Authenticate", "")
     challenges = re.findall(AUTHENTICATION_CHALLENGE, header)
     for scheme, parameter_list in challenges:
         parameters = re.findall(CHALLENGE_PARAMETER, parameter_list)
@@ -124,26 +123,33 @@ class BearerTokenCredentialPolicy(_BearerTokenCredentialPolicyBase, HTTPPolicy):
         response = self.next.send(request)
 
         if response.http_response.status_code == 401:
-            challenges = _get_challenges(response)
-            self._token = self.on_challenge(challenges)
-            if self._token:  # self._token is None when the policy couldn't complete the challenge(s)
-                self._update_headers(request.http_request.headers, self._token.token)
-                response = self.next.send(request)
+            self._token = None  # any cached token is invalid
+            challenge = response.http_response.headers.get("WWW-Authenticate", "")
+            if challenge:
+                request.http_request.headers.pop("Authorization", None)
+                self.on_challenge(request, challenge)
+                if "Authorization" in request.http_request.headers:  # on_challenge satisfied the challenge
+                    response = self.next.send(request)
 
         return response
 
-    def on_challenge(self, challenges):
-        # type: (List[AuthenticationChallenge]) -> Optional[AccessToken]
-        """Base implementation handles claims directives. Clients expecting other challenges must override."""
+    def on_challenge(self, request, www_authenticate):
+        # type: (PipelineRequest, str) -> None
+        """Authorize request according to an authentication challenge.
 
-        if len(challenges) != 1 or "claims" not in challenges[0].parameters:
+        Base implementation handles CAE claims directives. Clients expecting other challenges must override.
+        """
+
+        parsed_challenges = _get_challenges(www_authenticate)
+        if len(parsed_challenges) != 1 or "claims" not in parsed_challenges[0].parameters:
             # no or multiple challenges, or no claims directive
-            return None
+            return
 
-        encoded_claims = challenges[0].parameters["claims"]
+        encoded_claims = parsed_challenges[0].parameters["claims"]
         padding_needed = 4 - len(encoded_claims) % 4
         claims = base64.urlsafe_b64decode(encoded_claims + "=" * padding_needed).decode()
-        return self._credential.get_token(*self._scopes, claims_challenge=claims)
+        self._token = self._credential.get_token(*self._scopes, claims_challenge=claims)
+        self._update_headers(request.http_request.headers, self._token.token)
 
 
 class AzureKeyCredentialPolicy(SansIOHTTPPolicy):
