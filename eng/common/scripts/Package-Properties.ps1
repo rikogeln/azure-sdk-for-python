@@ -109,7 +109,7 @@ function Get-PkgProperties
             return $pkgProps
         }
     }
-    LogError "Failed to retrive Properties for $PackageName"
+    LogWarning "Failed to retrive Properties for $PackageName"
     return $null
 }
 
