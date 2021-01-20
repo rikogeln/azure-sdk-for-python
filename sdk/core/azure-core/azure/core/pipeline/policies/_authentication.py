@@ -4,6 +4,7 @@
 # license information.
 # -------------------------------------------------------------------------
 import base64
+from collections import namedtuple
 import re
 import time
 import six
@@ -23,30 +24,6 @@ if TYPE_CHECKING:
     from azure.core.credentials import AccessToken, TokenCredential, AzureKeyCredential, AzureSasCredential
     from azure.core.pipeline import PipelineRequest
     from azure.core.pipeline import PipelineRequest, PipelineResponse
-
-
-class AuthenticationChallenge(object):  # pylint:disable=too-few-public-methods
-    def __init__(self, scheme, parameters):
-        # type: (str, Mapping[str, str]) -> None
-        self.scheme = scheme
-        self.parameters = parameters
-
-
-# these expressions are for challenges with comma delimited parameters having quoted values, e.g.
-# Bearer authorization="https://login.microsoftonline.com/...", resource="https://vault.azure.net"
-AUTHENTICATION_CHALLENGE = re.compile(r'(?:(\w+) ((?:\w+=".*?"(?:, )?)+)(?:, )?)')
-CHALLENGE_PARAMETER = re.compile(r'(?:(\w+)="([^"]*)")+')
-
-
-def _get_challenges(header):
-    # type: (str) -> List[AuthenticationChallenge]
-    result = []
-    challenges = re.findall(AUTHENTICATION_CHALLENGE, header)
-    for scheme, parameter_list in challenges:
-        parameters = re.findall(CHALLENGE_PARAMETER, parameter_list)
-        challenge = AuthenticationChallenge(scheme, dict(parameters))
-        result.append(challenge)
-    return result
 
 
 # pylint:disable=too-few-public-methods
@@ -180,6 +157,25 @@ class BearerTokenCredentialPolicy(_BearerTokenCredentialPolicyBase, HTTPPolicy):
         self._token = self._credential.get_token(*self._scopes, claims_challenge=claims)
         self._update_headers(request.http_request.headers, self._token.token)
         return True
+
+
+# these expressions are for challenges with comma delimited parameters having quoted values, e.g.
+# Bearer authorization="https://login.microsoftonline.com/", resource="https://vault.azure.net"
+_AUTHENTICATION_CHALLENGE = re.compile(r'(?:(\w+) ((?:\w+=".*?"(?:, )?)+)(?:, )?)')
+_CHALLENGE_PARAMETER = re.compile(r'(?:(\w+)="([^"]*)")+')
+
+_AuthenticationChallenge = namedtuple("_AuthenticationChallenge", "scheme,parameters")
+
+
+def _get_challenges(header):
+    # type: (str) -> List[_AuthenticationChallenge]
+    result = []
+    challenges = re.findall(_AUTHENTICATION_CHALLENGE, header)
+    for scheme, parameter_list in challenges:
+        parameters = re.findall(_CHALLENGE_PARAMETER, parameter_list)
+        challenge = _AuthenticationChallenge(scheme, dict(parameters))
+        result.append(challenge)
+    return result
 
 
 class AzureKeyCredentialPolicy(SansIOHTTPPolicy):
