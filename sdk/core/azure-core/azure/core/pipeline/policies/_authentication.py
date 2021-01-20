@@ -3,10 +3,12 @@
 # Licensed under the MIT License. See LICENSE.txt in the project root for
 # license information.
 # -------------------------------------------------------------------------
+import base64
+import re
 import time
 import six
 
-from . import SansIOHTTPPolicy
+from . import HTTPPolicy, SansIOHTTPPolicy
 from ...exceptions import ServiceRequestError
 
 try:
@@ -16,9 +18,35 @@ except ImportError:
 
 if TYPE_CHECKING:
     # pylint:disable=unused-import
-    from typing import Any, Dict, Optional
+    from typing import Any, Dict, List, Mapping, Optional
     from azure.core.credentials import AccessToken, TokenCredential, AzureKeyCredential, AzureSasCredential
     from azure.core.pipeline import PipelineRequest
+    from azure.core.pipeline import PipelineRequest, PipelineResponse
+
+
+class AuthenticationChallenge(object):  # pylint:disable=too-few-public-methods
+    def __init__(self, scheme, parameters):
+        # type: (str, Mapping[str, str]) -> None
+        self.scheme = scheme
+        self.parameters = parameters
+
+
+# these expressions are for challenges with comma delimited parameters having quoted values, e.g.
+# Bearer authorization="https://login.microsoftonline.com/...", resource="https://vault.azure.net"
+AUTHENTICATION_CHALLENGE = re.compile(r'(?:(\w+) ((?:\w+=".*?"(?:, )?)+)(?:, )?)')
+CHALLENGE_PARAMETER = re.compile(r'(?:(\w+)="([^"]*)")+')
+
+
+def _get_challenges(response):
+    # type: (PipelineResponse) -> List[AuthenticationChallenge]
+    result = []
+    header = response.http_response.headers.get("WWW-Authenticate", "")
+    challenges = re.findall(AUTHENTICATION_CHALLENGE, header)
+    for scheme, parameter_list in challenges:
+        parameters = re.findall(CHALLENGE_PARAMETER, parameter_list)
+        challenge = AuthenticationChallenge(scheme, dict(parameters))
+        result.append(challenge)
+    return result
 
 
 # pylint:disable=too-few-public-methods
@@ -71,7 +99,7 @@ class _BearerTokenCredentialPolicyBase(object):
         return not self._token or self._token.expires_on - time.time() < 300
 
 
-class BearerTokenCredentialPolicy(_BearerTokenCredentialPolicyBase, SansIOHTTPPolicy):
+class BearerTokenCredentialPolicy(_BearerTokenCredentialPolicyBase, HTTPPolicy):
     """Adds a bearer token Authorization header to requests.
 
     :param credential: The credential.
@@ -80,8 +108,8 @@ class BearerTokenCredentialPolicy(_BearerTokenCredentialPolicyBase, SansIOHTTPPo
     :raises: :class:`~azure.core.exceptions.ServiceRequestError`
     """
 
-    def on_request(self, request):
-        # type: (PipelineRequest) -> None
+    def send(self, request):
+        # type: (PipelineRequest) -> PipelineResponse
         """Adds a bearer token Authorization header to request and sends request to next policy.
 
         :param request: The pipeline request object
@@ -92,6 +120,30 @@ class BearerTokenCredentialPolicy(_BearerTokenCredentialPolicyBase, SansIOHTTPPo
         if self._token is None or self._need_new_token:
             self._token = self._credential.get_token(*self._scopes)
         self._update_headers(request.http_request.headers, self._token.token)
+
+        response = self.next.send(request)
+
+        if response.http_response.status_code == 401:
+            challenges = _get_challenges(response)
+            self._token = self.on_challenge(challenges)
+            if self._token:  # self._token is None when the policy couldn't complete the challenge(s)
+                self._update_headers(request.http_request.headers, self._token.token)
+                response = self.next.send(request)
+
+        return response
+
+    def on_challenge(self, challenges):
+        # type: (List[AuthenticationChallenge]) -> Optional[AccessToken]
+        """Base implementation handles claims directives. Clients expecting other challenges must override."""
+
+        if len(challenges) != 1 or "claims" not in challenges[0].parameters:
+            # no or multiple challenges, or no claims directive
+            return None
+
+        encoded_claims = challenges[0].parameters["claims"]
+        padding_needed = 4 - len(encoded_claims) % 4
+        claims = base64.urlsafe_b64decode(encoded_claims + "=" * padding_needed).decode()
+        return self._credential.get_token(*self._scopes, claims_challenge=claims)
 
 
 class AzureKeyCredentialPolicy(SansIOHTTPPolicy):
