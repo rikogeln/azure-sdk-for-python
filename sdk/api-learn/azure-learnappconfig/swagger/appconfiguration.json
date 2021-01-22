@@ -67,11 +67,6 @@
             }
           }
         },
-        "x-ms-examples": {
-          "GetKeys": {
-            "$ref": "./examples/GetKeys.json"
-          }
-        },
         "x-ms-pageable": {
           "itemName": "items",
           "nextLinkName": "@nextLink"
@@ -123,11 +118,6 @@
           },
           "default": {
             "description": "Error response describing why the operation failed"
-          }
-        },
-        "x-ms-examples": {
-          "CheckKeys": {
-            "$ref": "./examples/CheckKeys.json"
           }
         }
       }
@@ -217,11 +207,6 @@
             }
           }
         },
-        "x-ms-examples": {
-          "GetKeyValues": {
-            "$ref": "./examples/GetKeyValues.json"
-          }
-        },
         "x-ms-pageable": {
           "itemName": "items",
           "nextLinkName": "@nextLink"
@@ -299,11 +284,6 @@
           },
           "default": {
             "description": "Error response describing why the operation failed"
-          }
-        },
-        "x-ms-examples": {
-          "CheckKeyValues": {
-            "$ref": "./examples/CheckKeyValues.json"
           }
         }
       }
@@ -407,17 +387,6 @@
               "$ref": "#/definitions/Error"
             }
           }
-        },
-        "x-ms-examples": {
-          "GetKeyValue": {
-            "$ref": "./examples/GetKeyValue.json"
-          },
-          "GetKeyValue_IfMatch": {
-            "$ref": "./examples/GetKeyValue_IfMatch.json"
-          },
-          "GetKeyValue_IfNoneMatch": {
-            "$ref": "./examples/GetKeyValue_IfNoneMatch.json"
-          }
         }
       },
       "put": {
@@ -503,14 +472,6 @@
               "$ref": "#/definitions/Error"
             }
           }
-        },
-        "x-ms-examples": {
-          "PutKeyValue": {
-            "$ref": "./examples/PutKeyValue.json"
-          },
-          "PutKeyValue_IfMatch": {
-            "$ref": "./examples/PutKeyValue_IfMatch.json"
-          }
         }
       },
       "delete": {
@@ -583,14 +544,6 @@
             "schema": {
               "$ref": "#/definitions/Error"
             }
-          }
-        },
-        "x-ms-examples": {
-          "DeleteKeyValue": {
-            "$ref": "./examples/DeleteKeyValue.json"
-          },
-          "DeleteKeyValue_IfMatch": {
-            "$ref": "./examples/DeleteKeyValue_IfMatch.json"
           }
         }
       },
@@ -682,17 +635,6 @@
           "default": {
             "description": "Error response describing why the operation failed"
           }
-        },
-        "x-ms-examples": {
-          "CheckKeyValue": {
-            "$ref": "./examples/CheckKeyValue.json"
-          },
-          "CheckKeyValue_IfMatch": {
-            "$ref": "./examples/CheckKeyValue_IfMatch.json"
-          },
-          "CheckKeyValue_IfNoneMatch": {
-            "$ref": "./examples/CheckKeyValue_IfNoneMatch.json"
-          }
         }
       }
     },
@@ -768,11 +710,6 @@
             }
           }
         },
-        "x-ms-examples": {
-          "GetLabels": {
-            "$ref": "./examples/GetLabels.json"
-          }
-        },
         "x-ms-pageable": {
           "itemName": "items",
           "nextLinkName": "@nextLink"
@@ -837,11 +774,6 @@
           },
           "default": {
             "description": "Error response describing why the operation failed"
-          }
-        },
-        "x-ms-examples": {
-          "CheckLabels": {
-            "$ref": "./examples/CheckLabels.json"
           }
         }
       }
@@ -915,14 +847,6 @@
               "$ref": "#/definitions/Error"
             }
           }
-        },
-        "x-ms-examples": {
-          "PutLock": {
-            "$ref": "./examples/PutLock.json"
-          },
-          "PutLock_IfMatch": {
-            "$ref": "./examples/PutLock_IfMatch.json"
-          }
         }
       },
       "delete": {
@@ -992,14 +916,6 @@
             "schema": {
               "$ref": "#/definitions/Error"
             }
-          }
-        },
-        "x-ms-examples": {
-          "DeleteLock": {
-            "$ref": "./examples/DeleteLock.json"
-          },
-          "DeleteLock_IfMatch": {
-            "$ref": "./examples/DeleteLock_IfMatch.json"
           }
         }
       }
@@ -1088,15 +1004,6 @@
               "$ref": "#/definitions/Error"
             }
           }
-        },
-        "x-ms-examples": {
-          "GetRevisions": {
-            "$ref": "./examples/GetRevisions.json"
-          }
-        },
-        "x-ms-pageable": {
-          "itemName": "items",
-          "nextLinkName": "@nextLink"
         }
       },
       "head": {
@@ -1171,11 +1078,6 @@
           },
           "default": {
             "description": "Error response describing why the operation failed"
-          }
-        },
-        "x-ms-examples": {
-          "CheckRevisions": {
-            "$ref": "./examples/CheckRevisions.json"
           }
         }
       }
