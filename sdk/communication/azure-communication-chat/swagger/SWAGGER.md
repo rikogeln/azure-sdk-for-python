@@ -15,7 +15,7 @@ autorest SWAGGER.md
 
 ### Settings
 ``` yaml
-input-file: https://raw.githubusercontent.com/Azure/azure-rest-api-specs/8818a603b78a1355ba1647ab9cd4e3354cdc4b69/specification/communication/data-plane/Microsoft.CommunicationServicesChat/preview/2020-09-21-preview2/communicationserviceschat.json
+input-file: https://raw.githubusercontent.com/rikogeln/azure-rest-api-specs/5405e748f1c2bfb3fce42d18b3a532da52e2782f/specification/mixedreality/data-plane/Microsoft.MixedReality/preview/2021-01-01-preview/mr-arr.json
 output-folder: ../azure/communication/chat/_generated
 namespace: azure.communication.chat
 no-namespace-folders: true
