@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------
+from typing import TYPE_CHECKING
 
 from datetime import datetime
 
@@ -26,13 +27,31 @@ import pickle
 import base64
 
 from azure.core.credentials import AccessToken
+from azure.core.credentials import AzureKeyCredential
+
+if TYPE_CHECKING:
+    # pylint: disable=unused-import,ungrouped-imports
+    from typing import Any, Union
+    from azure.core.credentials import TokenCredential
+
 from azure.core.pipeline.policies import BearerTokenCredentialPolicy
+
+from azure.mixedreality.authentication import MixedRealityStsClient
+
+from azure.mixedreality.authentication.shared._mixed_reality_token_credential import get_mixedreality_credential
+
+from azure.mixedreality.authentication.shared._mixed_reality_token_credential import MixedRealityTokenCredential
+
+from azure.mixedreality.authentication.shared._mixedreality_account_key_credential import MixedRealityAccountKeyCredential
+from azure.mixedreality.authentication.shared._static_access_token_credential import StaticAccessTokenCredential
+from azure.mixedreality.authentication.shared._authentication_endpoint import construct_endpoint_url
 
 from azure.core.polling import LROPoller, NoPolling, PollingMethod
 from azure.core.polling.base_polling import LROBasePolling
 
 # from ._models import ConfigurationSetting
 from ._version import VERSION
+from ._version import SDK_MONIKER
 
 # TODO: factor out/check if this is really the right way to go
 # taken from: \sdk\communication\azure-communication-administration\azure\communication\administration\_polling.py
@@ -106,54 +125,53 @@ class SessionPolling(RemoteRenderingPolling):
         super().initialize(client, initial_response, deserialization_callback)
         self._query_status = partial(self._client.get_session, account_id=self._account_id, session_id=initial_response.id)
 
-class StsBearerToken(object): #todo: how to implement a token credential
-    def __init__(self, token):
-        # type: (str) -> None
-
-        #TODO: what will we do with expires_on?
-        # expires_on is seconds since epoch arrpythonsdk\lib\site-packages\azure\core\pipeline\policies\_authentication.py 
-        expires_on = time.time() + 60*60 #1h expires on - should we parse this from the sts jwt token?
-        self._token = AccessToken(token= token, expires_on=expires_on)
-
-    def get_token(self):
-        return self._token
-
-    def expires_on(self):
-        return None
-
 class RemoteRenderingClient(object):
     """A Client for the RemoteRendering Service.
     
-    :param str service_url: The URL for the service.
-    :param srt sts token: A valid STS token for the account.
+    :param str remote_rendering_endpoint: The rendering service endpoint. This determines the region in which the rendering VM is created and asset conversions are performed.
+    # TODO: rest of documentation
     """
+    # TODO: c# sdk factord account_id and account_domain into a class - should we do the same?
+    def __init__(self, remote_rendering_endpoint, account_id, account_domain, credential, **kwargs):
+        # type: (str, str, str, Union[TokenCredential, AzureKeyCredential, AccessToken], Any) -> None
 
-    def __init__(self, service_url, account_id, sts_token, **kwargs):
-        # type: (str, str, str) -> None
+        if not remote_rendering_endpoint:
+            raise ValueError("remote_rendering_endpoint can not be None")
 
-        # TODO: figure out if bearerTokenCredential policy is the default or if i have to change stuff around
-        # TODO: why do i need to set the credential AND the policy? allegedly the policy is default?
-        credential = StsBearerToken(token = sts_token)
-        tokenPolicy = BearerTokenCredentialPolicy(credential = credential)
+        if not account_id:
+            raise ValueError("account_id can not be None")
 
-        # TODO: figure out if the default is sensible
-        # user_agent_moniker = "RemoteRenderingPythonClient/{}".format(VERSION)
+        if not account_domain:
+            raise ValueError("account_domain can not be None")
 
-        # TODO: # (should we verify that this is str a guid?)
+        if not credential:
+            raise ValueError("credential can not be None")
+
+        if isinstance(credential, AccessToken):
+            credential = StaticAccessTokenCredential(credential)
+
+        if isinstance(credential, AzureKeyCredential):
+            credential = MixedRealityAccountKeyCredential(account_id=account_id, account_key=credential)
+
+        endpoint_url = kwargs.pop('authentication_endpoint_url', construct_endpoint_url(account_domain))
+
+        # otherwise assume it is a TokenCredential and simply pass it through
+        credential = get_mixedreality_credential(account_id=account_id, account_domain=account_domain, credential= credential, endpoint_url=endpoint_url)
+        authentication_policy = BearerTokenCredentialPolicy(credential, [endpoint_url + '/.default'])
+
         self._account_id = account_id
 
         self._client = RemoteRenderingRestClient(
-            base_url=service_url,
-            # credential_scopes=[account_url.strip("/") + "/.default"], #TODO: do i need a scope? is this OAUTH only?
-            authentication_policy = tokenPolicy,
-            # sdk_moniker=user_agent_moniker,
+            base_url=remote_rendering_endpoint,
+            authentication_policy = authentication_policy,
+            sdk_moniker=SDK_MONIKER,
             **kwargs)
 
 # look at communication\azure-communication-administration\azure\communication\administration\_phone_number_administration_client.py
 
     def begin_asset_conversion(self, conversion_id, conversion_options, **kwargs):
 
-        initial_state = self._client.create_conversion(self._account_id, conversion_id, CreateConversionSettings(settings=conversion_options))
+        initial_state = self._client.create_conversion(self._account_id, conversion_id, CreateConversionSettings(settings=conversion_options), **kwargs)
         polling_method = ConversionPolling(account_id = self._account_id, is_terminated=lambda status: status in [
                 ConversionStatus.FAILED,
                 ConversionStatus.SUCCEEDED
@@ -163,11 +181,10 @@ class RemoteRenderingClient(object):
                          deserialization_callback=None,
                          polling_method=polling_method)
 
-
     # should this return a AssetConversionTask? 
     # should this return a azure.core.polling.LROPoller of
     def start_conversion(self, conversion_id, conversion_options, **kwargs):
-        conversion = self._client.create_conversion(self._account_id, conversion_id, CreateConversionSettings(settings=conversion_options))
+        conversion = self._client.create_conversion(self._account_id, conversion_id, CreateConversionSettings(settings=conversion_options), **kwargs)
         return conversion
 
     #todo: should this be called AssetConversion? AssetConversionTask? 
@@ -177,6 +194,7 @@ class RemoteRenderingClient(object):
         return conversion
 
     # TODO: type annotations
+    # TODO: convert generated models to external visible models?
     def get_conversions(self, **kwargs):
         return self._client.list_conversions(self._account_id)
 

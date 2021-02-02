@@ -8,6 +8,8 @@ import os
 import uuid 
 import time
 
+from azure.core.credentials import AzureKeyCredential
+
 from azure.mixedreality.remoterendering import RemoteRenderingClient
 from azure.mixedreality.remoterendering import ConversionInputSettings
 from azure.mixedreality.remoterendering import ConversionOutputSettings
@@ -17,19 +19,25 @@ from azure.mixedreality.remoterendering import SessionSize
 from azure.mixedreality.remoterendering import SessionStatus
 
 if __name__ == '__main__':
+    arr_endpoint = os.environ.get("ARR_ENDPOINT", None)
+    if not arr_endpoint:
+        raise ValueError("Set ARR_SERVICE_ENDPOINT env before run this sample.")
+
     account_id = os.environ.get("ARR_ACCOUNT_ID", None)
     if not account_id:
         raise ValueError("Set ARR_ACCOUNT_ID env before run this sample.")
 
-    arr_endpoint = os.environ.get("ARR_ENDPOINT", None)
-    if not arr_endpoint:
-        raise ValueError("Set ARR_ENDPOINT env before run this sample.")
+    account_domain = os.environ.get("ARR_ACCOUNT_DOMAIN", None)
+    if not account_domain:
+        raise ValueError("Set ARR_ACCOUNT_DOMAIN env before run this sample.")
 
-    sts_token = os.environ.get("ARR_STS_TOKEN", None)
-    if not sts_token:
-        raise ValueError("Set ARR_STS_TOKEN env before run this sample.")
+    account_key = os.environ.get("ARR_ACCOUNT_KEY", None)
+    if not account_key:
+        raise ValueError("Set ARR_ACCOUNT_KEY env before run this sample.")
 
-    client = RemoteRenderingClient(service_url=arr_endpoint, account_id=account_id, sts_token=sts_token)
+    key_credential = AzureKeyCredential(account_key)
+
+    client = RemoteRenderingClient(remote_rendering_endpoint=arr_endpoint, account_id=account_id, account_domain=account_domain, credential=key_credential )
 
     conversion_id = str(uuid.uuid4())
 
