@@ -131,7 +131,6 @@ class RemoteRenderingClient(object):
     :param str remote_rendering_endpoint: The rendering service endpoint. This determines the region in which the rendering VM is created and asset conversions are performed.
     # TODO: rest of documentation
     """
-    # TODO: c# sdk factord account_id and account_domain into a class - should we do the same?
     def __init__(self, remote_rendering_endpoint, account_id, account_domain, credential, **kwargs):
         # type: (str, str, str, Union[TokenCredential, AzureKeyCredential, AccessToken], Any) -> None
 
@@ -222,3 +221,16 @@ class RemoteRenderingClient(object):
 
     def get_sessions(self, **kwargs):
         return self._client.list_sessions(self._account_id)
+
+    def close(self):
+        # type: () -> None
+        self._client.close()
+
+    def __enter__(self):
+        # type: () -> RemoteRenderingClient
+        self._client.__enter__()  # pylint:disable=no-member
+        return self
+
+    def __exit__(self, *args):
+        # type: (*Any) -> None
+        self._client.__exit__(*args)  # pylint:disable=no-member
