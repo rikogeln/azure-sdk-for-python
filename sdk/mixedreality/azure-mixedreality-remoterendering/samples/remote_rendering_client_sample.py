@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
     print("listing sessions for account: '",account_id,"'")
     print("sessions:")
-    pageable = client.get_sessions()
+    pageable = client.get_rendering_sessions()
     for s in pageable:
         print("\t session:  id:'",s.id,"' status'",s.status,"'", s.creation_time.strftime("%m/%d/%Y, %H:%M:%S"))
         client.stop_rendering_session(s.id)

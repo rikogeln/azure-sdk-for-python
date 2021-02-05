@@ -59,7 +59,7 @@ class RemoteRenderingPolling(PollingMethod):
     """ Abstract base class for polling.
     """
     def __init__(self, account_id, is_terminated, polling_interval=5):
-        # type: (bool, int) -> None
+        # type: (bool, string, int) -> None
         self._account_id = account_id
         self._response = None
         self._client = None
@@ -92,7 +92,7 @@ class RemoteRenderingPolling(PollingMethod):
         return self._is_terminated(self._response.status)
 
     def resource(self):
-        # type: () -> Union[PhoneNumberReservation, PhoneNumberRelease]
+        # type: () -> Union[PhoneNumberReservation, PhoneNumberRelease]  #TODO: fix type annotation
         if not self.finished():
             return None
         return self._response
@@ -109,7 +109,7 @@ class RemoteRenderingPolling(PollingMethod):
     # TODO: do we need the from_continuation_token function?
     @classmethod
     def from_continuation_token(cls, continuation_token, client, **kwargs):  # pylint: disable=W0221
-        # type(str, PhoneNumberAdministrationClient, Any) -> Tuple
+        # type(str, RemoteRenderingClient, Any) -> Tuple
         initial_response = pickle.loads(base64.b64decode(continuation_token))  # nosec
         return client, initial_response, None
 
@@ -203,6 +203,7 @@ class RemoteRenderingClient(object):
         polling_method = SessionPolling(account_id = self._account_id, is_terminated=lambda status: status in [
                 SessionStatus.EXPIRED,
                 SessionStatus.ERROR,
+                SessionStatus.STOPPED,
                 SessionStatus.READY
             ] )
         return LROPoller(client=self._client,
@@ -219,7 +220,7 @@ class RemoteRenderingClient(object):
     def extend_rendering_session(self, session_id, lease_time_minutes):
         return self._client.update_session(self._account_id, session_id, UpdateSessionSettings(max_lease_time_minutes=lease_time_minutes))
 
-    def get_sessions(self, **kwargs):
+    def get_renderin_sessions(self, **kwargs):
         return self._client.list_sessions(self._account_id)
 
     def close(self):
