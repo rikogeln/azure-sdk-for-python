@@ -1,12 +1,15 @@
 [![Build Status](https://dev.azure.com/azure-sdk/public/_apis/build/status/azure-sdk-for-python.client?branchName=master)](https://dev.azure.com/azure-sdk/public/_build/latest?definitionId=46?branchName=master)
 
-# Azure Template Package client library for Python
+# Azure Remote Rendering Package client library for Python
+TODO: describe the service
 
-This template package matches necessary patterns that the development team has established to create a unified sdk functional from Python 2.7 onwards. The packages contained herein can be installed singly or as part of the `azure` namespace. Any other introductory text should go here.
+## Prerequisites
 
-This package has been tested with Python 2.7, 3.5, 3.6, 3.7 and 3.8
+- An [Azure subscription][azure_sub].
+- You must have an [Azure Remote Rendering](https://docs.microsoft.com/azure/remote-rendering/) account
 
-For a more complete set of Azure libraries, see https://aka.ms/azsdk/python/all
+- Familiarity with the authentication and credential concepts from the [Azure Identity library][azure_identity].
+- Python 2.7, or 3.5 or later is required to use this package.
 
 # Getting started
 
@@ -30,6 +33,25 @@ More sample code should go here, along with links out to the appropriate example
 
 # Contributing
 
-If you encounter any bugs or have suggestions, please file an issue in the [Issues](<https://github.com/Azure/azure-sdk-for-python/issues>) section of the project.
+This project welcomes contributions and suggestions. Most contributions require you to agree to a
+Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
+the rights to use your contribution. For details, visit https://cla.microsoft.com.
 
-![Impressions](https://azure-sdk-impressions.azurewebsites.net/api/impressions/azure-sdk-for-python%2Fsdk%2Ftemplate%2Fazure-template%2FREADME.png)
+When you submit a pull request, a CLA-bot will automatically determine whether you need to provide
+a CLA and decorate the PR appropriately (e.g., label, comment). Simply follow the instructions
+provided by the bot. You will only need to do this once across all repos using our CLA.
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
+contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+If you'd like to contribute to this library, please read the
+[contributing guide](https://github.com/Azure/azure-sdk-for-python/blob/master/CONTRIBUTING.md) to learn more about how to
+build and test the code.
+
+![Impressions](https://azure-sdk-impressions.azurewebsites.net/api/impressions/azure-sdk-for-python%2Fsdk%2mixedreality%2Fazure-mixedreality-remoterendering%2FREADME.png)
+
+[azure_cli]: https://docs.microsoft.com/cli/azure
+[azure_sub]: https://azure.microsoft.com/free/
+[azure_portal]: https://portal.azure.com
+[azure_identity]: https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/identity/azure-identity
