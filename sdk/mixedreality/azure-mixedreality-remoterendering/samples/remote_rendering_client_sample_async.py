@@ -84,9 +84,10 @@ async def main():
 
         session_id = str(uuid.uuid4())
         sessionPoller = await client.begin_rendering_session(session_id=session_id, size=SessionSize.STANDARD, lease_time_minutes= 5)
-        #print("starting session:", session_id)
-        #await sessionPoller.wait()
-        #session = await sessionPoller.result()
+        
+        await sessionPoller.wait()
+        session = await sessionPoller.result()
+
 
         #session = await client.extend_rendering_session(session_id, 10)
         #print("session with id:'",session.id,"' updated. LeaseTime:'",session.max_lease_time_minutes,"'")

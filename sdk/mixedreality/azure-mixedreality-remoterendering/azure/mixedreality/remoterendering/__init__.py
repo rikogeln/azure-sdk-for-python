@@ -6,7 +6,7 @@
 
 from ._version import VERSION
 
-from .remote_rendering_client import RemoteRenderingClient
+from ._remote_rendering_client import RemoteRenderingClient
 from ._generated.models import Conversion, ConversionSettings, ConversionInputSettings, ConversionOutputSettings, ConversionStatus
 from ._generated.models import SessionProperties, SessionSize, SessionStatus
 
