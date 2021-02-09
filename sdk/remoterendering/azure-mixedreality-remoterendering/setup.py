@@ -3,15 +3,12 @@ import os
 from io import open
 import re
 
-# example setup.py Feel free to copy the entire "azure-template" folder into a package folder named
-# with "azure-<yourpackagename>". Ensure that the below arguments to setup() are updated to reflect
-# your package.
 
 # this setup.py is set up in a specific way to keep the azure* and azure-mgmt-* namespaces WORKING all the way
 # up from python 2.7. Reference here: https://github.com/Azure/azure-sdk-for-python/wiki/Azure-packaging
 
-PACKAGE_NAME = "azure-template"
-PACKAGE_PPRINT_NAME = "Template Package"
+PACKAGE_NAME = "azure-mixedreality-remoterendering"
+PACKAGE_PPRINT_NAME = "Azure Remote Rendering"
 
 # a-b-c => a/b/c
 package_folder_path = PACKAGE_NAME.replace('-', '/')
@@ -28,14 +25,17 @@ if not version:
 with open('README.md', encoding='utf-8') as f:
     long_description = f.read()
 
+with open("CHANGELOG.md", encoding="utf-8") as f:
+    long_description += f.read()
+
 setup(
     name=PACKAGE_NAME,
     version=version,
-    description='Microsoft Azure {} Client Library for Python'.format(PACKAGE_PPRINT_NAME),
+    description='Microsoft Azure {} Client Library for Python'.format(
+        PACKAGE_PPRINT_NAME),
 
     # ensure that these are updated to reflect the package owners' information
     long_description=long_description,
-    long_description_content_type='text/markdown',
     url='https://github.com/Azure/azure-sdk-for-python',
     author='Microsoft Corporation',
     author_email='azuresdkengsysadmins@microsoft.com',
@@ -49,6 +49,8 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
@@ -58,16 +60,17 @@ setup(
     packages=find_packages(exclude=[
         'tests',
         # Exclude packages that will be covered by PEP420 or nspkg
-        # This means any folder structure that only consists of a __init__.py. 
-        # For example, for storage, this would mean adding 'azure.storage' 
-        # in addition to the default 'azure' that is seen here.
-        'azure'
+        'azure',
+        'azure.mixedreality'
     ]),
     install_requires=[
-        'azure-core<2.0.0,>=1.2.2',
+        'azure-core<2.0.0,>=1.4.0',
+        'msrest>=0.5.0'
     ],
     extras_require={
-        ":python_version<'3.0'": ['azure-nspkg'],
+        ":python_version<'3.0'": ['futures', 'azure-mixedreality-nspkg'],
+        ":python_version<'3.4'": ['enum34>=1.0.4'],
+        ":python_version<'3.5'": ["typing"]
     },
     project_urls={
         'Bug Reports': 'https://github.com/Azure/azure-sdk-for-python/issues',
