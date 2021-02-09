@@ -42,8 +42,7 @@ class MixedRealityStsClient(object):
         Override the Mixed Reality STS service endpoint.
     """
 
-    def __init__(self,
-        account_id: str,
+    def __init__(self, account_id: str,
         account_domain: str,
         credential: Union[AzureKeyCredential, "AsyncTokenCredential"],
         *,

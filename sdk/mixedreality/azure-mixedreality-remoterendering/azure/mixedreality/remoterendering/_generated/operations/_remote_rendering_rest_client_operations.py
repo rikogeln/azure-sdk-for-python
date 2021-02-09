@@ -20,7 +20,9 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Dict, Generic, Iterable, Optional, TypeVar, Union
 
     T = TypeVar('T')
-    ClsType = Optional[Callable[[PipelineResponse[HttpRequest, HttpResponse], T, Dict[str, Any]], Any]]
+    ClsType = Optional[Callable[[
+        PipelineResponse[HttpRequest, HttpResponse], T, Dict[str, Any]], Any]]
+
 
 class RemoteRenderingRestClientOperationsMixin(object):
 
@@ -80,39 +82,47 @@ class RemoteRenderingRestClientOperationsMixin(object):
 
         # Construct parameters
         query_parameters = {}  # type: Dict[str, Any]
-        query_parameters['api-version'] = self._serialize.query("api_version", api_version, 'str')
+        query_parameters['api-version'] = self._serialize.query(
+            "api_version", api_version, 'str')
 
         # Construct headers
         header_parameters = {}  # type: Dict[str, Any]
-        header_parameters['Content-Type'] = self._serialize.header("content_type", content_type, 'str')
+        header_parameters['Content-Type'] = self._serialize.header(
+            "content_type", content_type, 'str')
         header_parameters['Accept'] = 'application/json'
 
         body_content_kwargs = {}  # type: Dict[str, Any]
         body_content = self._serialize.body(body, 'CreateConversionSettings')
         body_content_kwargs['content'] = body_content
-        request = self._client.put(url, query_parameters, header_parameters, **body_content_kwargs)
+        request = self._client.put(
+            url, query_parameters, header_parameters, **body_content_kwargs)
 
-        pipeline_response = self._client._pipeline.run(request, stream=False, **kwargs)
+        pipeline_response = self._client._pipeline.run(
+            request, stream=False, **kwargs)
         response = pipeline_response.http_response
 
         if response.status_code not in [200, 201]:
-            map_error(status_code=response.status_code, response=response, error_map=error_map)
+            map_error(status_code=response.status_code,
+                      response=response, error_map=error_map)
             raise HttpResponseError(response=response)
 
         response_headers = {}
         if response.status_code == 200:
-            response_headers['MS-CV']=self._deserialize('str', response.headers.get('MS-CV'))
+            response_headers['MS-CV'] = self._deserialize(
+                'str', response.headers.get('MS-CV'))
             deserialized = self._deserialize('Conversion', pipeline_response)
 
         if response.status_code == 201:
-            response_headers['MS-CV']=self._deserialize('str', response.headers.get('MS-CV'))
+            response_headers['MS-CV'] = self._deserialize(
+                'str', response.headers.get('MS-CV'))
             deserialized = self._deserialize('Conversion', pipeline_response)
 
         if cls:
             return cls(pipeline_response, deserialized, response_headers)
 
         return deserialized
-    create_conversion.metadata = {'url': '/accounts/{account_id}/conversions/{conversion_id}'}  # type: ignore
+    create_conversion.metadata = {
+        'url': '/accounts/{account_id}/conversions/{conversion_id}'}  # type: ignore
 
     def get_conversion(
         self,
@@ -155,30 +165,36 @@ class RemoteRenderingRestClientOperationsMixin(object):
 
         # Construct parameters
         query_parameters = {}  # type: Dict[str, Any]
-        query_parameters['api-version'] = self._serialize.query("api_version", api_version, 'str')
+        query_parameters['api-version'] = self._serialize.query(
+            "api_version", api_version, 'str')
 
         # Construct headers
         header_parameters = {}  # type: Dict[str, Any]
         header_parameters['Accept'] = 'application/json'
 
         request = self._client.get(url, query_parameters, header_parameters)
-        pipeline_response = self._client._pipeline.run(request, stream=False, **kwargs)
+        pipeline_response = self._client._pipeline.run(
+            request, stream=False, **kwargs)
         response = pipeline_response.http_response
 
         if response.status_code not in [200]:
-            map_error(status_code=response.status_code, response=response, error_map=error_map)
+            map_error(status_code=response.status_code,
+                      response=response, error_map=error_map)
             raise HttpResponseError(response=response)
 
         response_headers = {}
-        response_headers['MS-CV']=self._deserialize('str', response.headers.get('MS-CV'))
-        response_headers['Retry-After']=self._deserialize('int', response.headers.get('Retry-After'))
+        response_headers['MS-CV'] = self._deserialize(
+            'str', response.headers.get('MS-CV'))
+        response_headers['Retry-After'] = self._deserialize(
+            'int', response.headers.get('Retry-After'))
         deserialized = self._deserialize('Conversion', pipeline_response)
 
         if cls:
             return cls(pipeline_response, deserialized, response_headers)
 
         return deserialized
-    get_conversion.metadata = {'url': '/accounts/{account_id}/conversions/{conversion_id}'}  # type: ignore
+    get_conversion.metadata = {
+        'url': '/accounts/{account_id}/conversions/{conversion_id}'}  # type: ignore
 
     def list_conversions(
         self,
@@ -223,17 +239,21 @@ class RemoteRenderingRestClientOperationsMixin(object):
                 url = self._client.format_url(url, **path_format_arguments)
                 # Construct parameters
                 query_parameters = {}  # type: Dict[str, Any]
-                query_parameters['api-version'] = self._serialize.query("api_version", api_version, 'str')
+                query_parameters['api-version'] = self._serialize.query(
+                    "api_version", api_version, 'str')
 
-                request = self._client.get(url, query_parameters, header_parameters)
+                request = self._client.get(
+                    url, query_parameters, header_parameters)
             else:
                 url = next_link
                 query_parameters = {}  # type: Dict[str, Any]
-                request = self._client.get(url, query_parameters, header_parameters)
+                request = self._client.get(
+                    url, query_parameters, header_parameters)
             return request
 
         def extract_data(pipeline_response):
-            deserialized = self._deserialize('ConversionList', pipeline_response)
+            deserialized = self._deserialize(
+                'ConversionList', pipeline_response)
             list_of_elem = deserialized.conversions
             if cls:
                 list_of_elem = cls(list_of_elem)
@@ -242,11 +262,13 @@ class RemoteRenderingRestClientOperationsMixin(object):
         def get_next(next_link=None):
             request = prepare_request(next_link)
 
-            pipeline_response = self._client._pipeline.run(request, stream=False, **kwargs)
+            pipeline_response = self._client._pipeline.run(
+                request, stream=False, **kwargs)
             response = pipeline_response.http_response
 
             if response.status_code not in [200]:
-                map_error(status_code=response.status_code, response=response, error_map=error_map)
+                map_error(status_code=response.status_code,
+                          response=response, error_map=error_map)
                 raise HttpResponseError(response=response)
 
             return pipeline_response
@@ -254,7 +276,8 @@ class RemoteRenderingRestClientOperationsMixin(object):
         return ItemPaged(
             get_next, extract_data
         )
-    list_conversions.metadata = {'url': '/accounts/{account_id}/conversions'}  # type: ignore
+    list_conversions.metadata = {
+        'url': '/accounts/{account_id}/conversions'}  # type: ignore
 
     def create_session(
         self,
@@ -281,7 +304,8 @@ class RemoteRenderingRestClientOperationsMixin(object):
         :rtype: ~azure.mixedreality.remoterendering._generated.models.SessionProperties
         :raises: ~azure.core.exceptions.HttpResponseError
         """
-        cls = kwargs.pop('cls', None)  # type: ClsType["models.SessionProperties"]
+        cls = kwargs.pop(
+            'cls', None)  # type: ClsType["models.SessionProperties"]
         error_map = {
             404: ResourceNotFoundError,
             400: lambda response: HttpResponseError(response=response, model=self._deserialize(models.ErrorResponse, response)),
@@ -302,38 +326,47 @@ class RemoteRenderingRestClientOperationsMixin(object):
 
         # Construct parameters
         query_parameters = {}  # type: Dict[str, Any]
-        query_parameters['api-version'] = self._serialize.query("api_version", api_version, 'str')
+        query_parameters['api-version'] = self._serialize.query(
+            "api_version", api_version, 'str')
 
         # Construct headers
         header_parameters = {}  # type: Dict[str, Any]
-        header_parameters['Content-Type'] = self._serialize.header("content_type", content_type, 'str')
+        header_parameters['Content-Type'] = self._serialize.header(
+            "content_type", content_type, 'str')
         header_parameters['Accept'] = 'application/json'
 
         body_content_kwargs = {}  # type: Dict[str, Any]
         body_content = self._serialize.body(body, 'CreateSessionSettings')
         body_content_kwargs['content'] = body_content
-        request = self._client.put(url, query_parameters, header_parameters, **body_content_kwargs)
+        request = self._client.put(
+            url, query_parameters, header_parameters, **body_content_kwargs)
 
-        pipeline_response = self._client._pipeline.run(request, stream=False, **kwargs)
+        pipeline_response = self._client._pipeline.run(
+            request, stream=False, **kwargs)
         response = pipeline_response.http_response
 
         if response.status_code not in [200, 201]:
-            map_error(status_code=response.status_code, response=response, error_map=error_map)
+            map_error(status_code=response.status_code,
+                      response=response, error_map=error_map)
             raise HttpResponseError(response=response)
 
         response_headers = {}
         if response.status_code == 200:
-            deserialized = self._deserialize('SessionProperties', pipeline_response)
+            deserialized = self._deserialize(
+                'SessionProperties', pipeline_response)
 
         if response.status_code == 201:
-            response_headers['MS-CV']=self._deserialize('str', response.headers.get('MS-CV'))
-            deserialized = self._deserialize('SessionProperties', pipeline_response)
+            response_headers['MS-CV'] = self._deserialize(
+                'str', response.headers.get('MS-CV'))
+            deserialized = self._deserialize(
+                'SessionProperties', pipeline_response)
 
         if cls:
             return cls(pipeline_response, deserialized, response_headers)
 
         return deserialized
-    create_session.metadata = {'url': '/accounts/{account_id}/sessions/{session_id}'}  # type: ignore
+    create_session.metadata = {
+        'url': '/accounts/{account_id}/sessions/{session_id}'}  # type: ignore
 
     def get_session(
         self,
@@ -357,7 +390,8 @@ class RemoteRenderingRestClientOperationsMixin(object):
         :rtype: ~azure.mixedreality.remoterendering._generated.models.SessionProperties
         :raises: ~azure.core.exceptions.HttpResponseError
         """
-        cls = kwargs.pop('cls', None)  # type: ClsType["models.SessionProperties"]
+        cls = kwargs.pop(
+            'cls', None)  # type: ClsType["models.SessionProperties"]
         error_map = {
             404: ResourceNotFoundError,
             409: ResourceExistsError,
@@ -376,27 +410,32 @@ class RemoteRenderingRestClientOperationsMixin(object):
 
         # Construct parameters
         query_parameters = {}  # type: Dict[str, Any]
-        query_parameters['api-version'] = self._serialize.query("api_version", api_version, 'str')
+        query_parameters['api-version'] = self._serialize.query(
+            "api_version", api_version, 'str')
 
         # Construct headers
         header_parameters = {}  # type: Dict[str, Any]
         header_parameters['Accept'] = 'application/json'
 
         request = self._client.get(url, query_parameters, header_parameters)
-        pipeline_response = self._client._pipeline.run(request, stream=False, **kwargs)
+        pipeline_response = self._client._pipeline.run(
+            request, stream=False, **kwargs)
         response = pipeline_response.http_response
 
         if response.status_code not in [200]:
-            map_error(status_code=response.status_code, response=response, error_map=error_map)
+            map_error(status_code=response.status_code,
+                      response=response, error_map=error_map)
             raise HttpResponseError(response=response)
 
-        deserialized = self._deserialize('SessionProperties', pipeline_response)
+        deserialized = self._deserialize(
+            'SessionProperties', pipeline_response)
 
         if cls:
             return cls(pipeline_response, deserialized, {})
 
         return deserialized
-    get_session.metadata = {'url': '/accounts/{account_id}/sessions/{session_id}'}  # type: ignore
+    get_session.metadata = {
+        'url': '/accounts/{account_id}/sessions/{session_id}'}  # type: ignore
 
     def update_session(
         self,
@@ -423,7 +462,8 @@ class RemoteRenderingRestClientOperationsMixin(object):
         :rtype: ~azure.mixedreality.remoterendering._generated.models.SessionProperties
         :raises: ~azure.core.exceptions.HttpResponseError
         """
-        cls = kwargs.pop('cls', None)  # type: ClsType["models.SessionProperties"]
+        cls = kwargs.pop(
+            'cls', None)  # type: ClsType["models.SessionProperties"]
         error_map = {
             404: ResourceNotFoundError,
             409: ResourceExistsError,
@@ -444,32 +484,39 @@ class RemoteRenderingRestClientOperationsMixin(object):
 
         # Construct parameters
         query_parameters = {}  # type: Dict[str, Any]
-        query_parameters['api-version'] = self._serialize.query("api_version", api_version, 'str')
+        query_parameters['api-version'] = self._serialize.query(
+            "api_version", api_version, 'str')
 
         # Construct headers
         header_parameters = {}  # type: Dict[str, Any]
-        header_parameters['Content-Type'] = self._serialize.header("content_type", content_type, 'str')
+        header_parameters['Content-Type'] = self._serialize.header(
+            "content_type", content_type, 'str')
         header_parameters['Accept'] = 'application/json'
 
         body_content_kwargs = {}  # type: Dict[str, Any]
         body_content = self._serialize.body(body, 'UpdateSessionSettings')
         body_content_kwargs['content'] = body_content
-        request = self._client.patch(url, query_parameters, header_parameters, **body_content_kwargs)
+        request = self._client.patch(
+            url, query_parameters, header_parameters, **body_content_kwargs)
 
-        pipeline_response = self._client._pipeline.run(request, stream=False, **kwargs)
+        pipeline_response = self._client._pipeline.run(
+            request, stream=False, **kwargs)
         response = pipeline_response.http_response
 
         if response.status_code not in [200]:
-            map_error(status_code=response.status_code, response=response, error_map=error_map)
+            map_error(status_code=response.status_code,
+                      response=response, error_map=error_map)
             raise HttpResponseError(response=response)
 
-        deserialized = self._deserialize('SessionProperties', pipeline_response)
+        deserialized = self._deserialize(
+            'SessionProperties', pipeline_response)
 
         if cls:
             return cls(pipeline_response, deserialized, {})
 
         return deserialized
-    update_session.metadata = {'url': '/accounts/{account_id}/sessions/{session_id}'}  # type: ignore
+    update_session.metadata = {
+        'url': '/accounts/{account_id}/sessions/{session_id}'}  # type: ignore
 
     def stop_session(
         self,
@@ -512,26 +559,31 @@ class RemoteRenderingRestClientOperationsMixin(object):
 
         # Construct parameters
         query_parameters = {}  # type: Dict[str, Any]
-        query_parameters['api-version'] = self._serialize.query("api_version", api_version, 'str')
+        query_parameters['api-version'] = self._serialize.query(
+            "api_version", api_version, 'str')
 
         # Construct headers
         header_parameters = {}  # type: Dict[str, Any]
 
         request = self._client.post(url, query_parameters, header_parameters)
-        pipeline_response = self._client._pipeline.run(request, stream=False, **kwargs)
+        pipeline_response = self._client._pipeline.run(
+            request, stream=False, **kwargs)
         response = pipeline_response.http_response
 
         if response.status_code not in [204]:
-            map_error(status_code=response.status_code, response=response, error_map=error_map)
+            map_error(status_code=response.status_code,
+                      response=response, error_map=error_map)
             raise HttpResponseError(response=response)
 
         response_headers = {}
-        response_headers['MS-CV']=self._deserialize('str', response.headers.get('MS-CV'))
+        response_headers['MS-CV'] = self._deserialize(
+            'str', response.headers.get('MS-CV'))
 
         if cls:
             return cls(pipeline_response, None, response_headers)
 
-    stop_session.metadata = {'url': '/accounts/{account_id}/sessions/{session_id}/:stop'}  # type: ignore
+    stop_session.metadata = {
+        'url': '/accounts/{account_id}/sessions/{session_id}/:stop'}  # type: ignore
 
     def list_sessions(
         self,
@@ -573,13 +625,16 @@ class RemoteRenderingRestClientOperationsMixin(object):
                 url = self._client.format_url(url, **path_format_arguments)
                 # Construct parameters
                 query_parameters = {}  # type: Dict[str, Any]
-                query_parameters['api-version'] = self._serialize.query("api_version", api_version, 'str')
+                query_parameters['api-version'] = self._serialize.query(
+                    "api_version", api_version, 'str')
 
-                request = self._client.get(url, query_parameters, header_parameters)
+                request = self._client.get(
+                    url, query_parameters, header_parameters)
             else:
                 url = next_link
                 query_parameters = {}  # type: Dict[str, Any]
-                request = self._client.get(url, query_parameters, header_parameters)
+                request = self._client.get(
+                    url, query_parameters, header_parameters)
             return request
 
         def extract_data(pipeline_response):
@@ -592,11 +647,13 @@ class RemoteRenderingRestClientOperationsMixin(object):
         def get_next(next_link=None):
             request = prepare_request(next_link)
 
-            pipeline_response = self._client._pipeline.run(request, stream=False, **kwargs)
+            pipeline_response = self._client._pipeline.run(
+                request, stream=False, **kwargs)
             response = pipeline_response.http_response
 
             if response.status_code not in [200]:
-                map_error(status_code=response.status_code, response=response, error_map=error_map)
+                map_error(status_code=response.status_code,
+                          response=response, error_map=error_map)
                 raise HttpResponseError(response=response)
 
             return pipeline_response
@@ -604,4 +661,5 @@ class RemoteRenderingRestClientOperationsMixin(object):
         return ItemPaged(
             get_next, extract_data
         )
-    list_sessions.metadata = {'url': '/accounts/{account_id}/sessions'}  # type: ignore
+    list_sessions.metadata = {
+        'url': '/accounts/{account_id}/sessions'}  # type: ignore

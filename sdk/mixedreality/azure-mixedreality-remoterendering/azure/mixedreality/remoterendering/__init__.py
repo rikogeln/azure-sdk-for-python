@@ -4,11 +4,12 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------
 
-from ._version import VERSION
-
+from ._generated.models import (Conversion, ConversionInputSettings,
+                                ConversionOutputSettings, ConversionSettings,
+                                ConversionStatus, SessionProperties,
+                                SessionSize, SessionStatus)
 from ._remote_rendering_client import RemoteRenderingClient
-from ._generated.models import Conversion, ConversionSettings, ConversionInputSettings, ConversionOutputSettings, ConversionStatus
-from ._generated.models import SessionProperties, SessionSize, SessionStatus
+from ._version import VERSION
 
 __all__ = [
     'RemoteRenderingClient',

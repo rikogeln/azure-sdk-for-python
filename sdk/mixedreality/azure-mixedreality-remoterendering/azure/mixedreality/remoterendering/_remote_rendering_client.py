@@ -25,11 +25,10 @@ from azure.mixedreality.authentication.shared._static_access_token_credential im
 
 from ._generated import RemoteRenderingRestClient
 # TODO: do i need these for type checking?
-from ._generated.models import (Conversion, ConversionInputSettings,
-                                ConversionOutputSettings, ConversionSettings,
+from ._generated.models import (Conversion, ConversionSettings,
                                 ConversionStatus, CreateConversionSettings,
-                                CreateSessionSettings, SessionStatus,
-                                UpdateSessionSettings)
+                                CreateSessionSettings, SessionProperties,
+                                SessionStatus, UpdateSessionSettings)
 from ._version import SDK_MONIKER
 
 if TYPE_CHECKING:
@@ -46,7 +45,7 @@ class RemoteRenderingPolling(PollingMethod):
     """
 
     def __init__(self, account_id, is_terminated, polling_interval=5):
-        # type: (bool, string, int) -> None
+        # type: (str, bool, int) -> None
         self._account_id = account_id
         self._response = None
         self._client = None
@@ -79,7 +78,7 @@ class RemoteRenderingPolling(PollingMethod):
         return self._is_terminated(self._response.status)
 
     def resource(self):
-        # type: () -> Union[PhoneNumberReservation, PhoneNumberRelease]  #TODO: fix type annotation
+        # type: () -> Union[Conversion, SessionProperties]  #TODO: fix type annotation - to i need ~...?
         if not self.finished():
             return None
         return self._response
@@ -119,15 +118,28 @@ class SessionPolling(RemoteRenderingPolling):
 
 
 class RemoteRenderingClient(object):
-    """A Client for the RemoteRendering Service.
+    """A client for the Azure Remote Rendering Service.
 
-    :param str remote_rendering_endpoint: The rendering service endpoint. This determines the region in which the rendering VM is created and asset conversions are performed.
-    # TODO: rest of documentation
+    This client offers functionality to convert assets to the format expected by the runtime, and also to manage the
+    lifetime of remote rendering sessions.
+
+    :param str remote_rendering_endpoint:
+        The rendering service endpoint. This determines the region in which the rendering session is created and asset
+        conversions are performed.
+    :param str account_id: The Azure Remote Rendering account identifier.
+    :param str account_domain:
+        The Azure Remote Rendering account domain. For example, for an account created in the eastus region, this will
+        have the form "eastus.mixedreality.azure.com"
+    :param Union[TokenCredential, AzureKeyCredential, AccessToken] credential: Authentication for the Azure Remote
+        Rendering account. Can be of the form of an AzureKeyCredential, TokenCredential or an AccessToken acquired from
+        the Mixed Reality Secure Token Service (STS).
     """
 
     def __init__(self, remote_rendering_endpoint, account_id, account_domain, credential, **kwargs):
         # type: (str, str, str, Union[TokenCredential, AzureKeyCredential, AccessToken], Any) -> None
 
+        # TODO: verify the above type annotation is correct
+        # TODO: should credential be called credential because of AccessToken
         if not remote_rendering_endpoint:
             raise ValueError("remote_rendering_endpoint can not be None")
 
@@ -164,14 +176,30 @@ class RemoteRenderingClient(object):
             sdk_moniker=SDK_MONIKER,
             **kwargs)
 
-# look at communication\azure-communication-administration\azure\communication\administration\_phone_number_administration_client.py
+# TODO: remove notes for where i got the code from
+# look at communication\azure-communication-administration\azure\communication\administration\
+# _phone_number_administration_client.py
 
     def begin_asset_conversion(self, conversion_id, conversion_options, **kwargs):
-        # type: (str, ConversionSettings], Any) ->  ~azure.core.polling.LROPoller
-
-        # TODO: question: should the type be something like ~azure.core.polling.LROPoller[Conversion] ?
+        # type: (str, ConversionSettings, Any) -> ~azure.core.polling.LROPoller
+        """
+        Start a new asset conversion with the given options.
+        :param str conversion_id:
+            An ID uniquely identifying the conversion for the remote rendering account. The ID is case sensitive, can
+            contain any combination of alphanumeric characters including hyphens and underscores, and cannot contain
+            more than 256 characters.
+        :param conversion_options: ~azure.mixedreality.remoterendering.ConversionSettings
+        :return: A poller for the created asset conversion
+        :rtype: ~azure.core.polling.LROPoller
+        """
+        # TODO: question: can/should we specify the return type like: LROPoller[Conversion] ?
+        #       (be more concrete of the type)
+        # TODO: question: is the return type ~azure.mixedreality.remoterendering.ConversionSettings correct?
         initial_state = self._client.create_conversion(
-            self._account_id, conversion_id, CreateConversionSettings(settings=conversion_options), **kwargs)
+            account_id=self._account_id,
+            conversion_id=conversion_id,
+            body=CreateConversionSettings(settings=conversion_options),
+            **kwargs)
         polling_method = ConversionPolling(account_id=self._account_id, is_terminated=lambda status: status in [
             ConversionStatus.FAILED,
             ConversionStatus.SUCCEEDED
@@ -181,32 +209,77 @@ class RemoteRenderingClient(object):
                          deserialization_callback=None,
                          polling_method=polling_method)
 
-    # should this return a AssetConversionTask?
-    # should this return a azure.core.polling.LROPoller of
-    def start_conversion(self, conversion_id, conversion_options, **kwargs):
-        conversion = self._client.create_conversion(
-            self._account_id,
-            conversion_id,
-            CreateConversionSettings(settings=conversion_options),
-            **kwargs)
-        return conversion
+    # TODO: do i need a method which can wrap a poller around an existing Conversion?
+    # TODO: question: should i expose a start method like the one below which returns the Conversion without a poller?
+#
+    # @distributed_trace
+    # def start_asset_conversion(self, conversion_id, conversion_options, **kwargs):
+    #     # type: (str, ConversionSettings, Any) -> ~azure.mixedreality.remoterendering.Conversion
+    #     """
+    #     Start a new asset conversion with the given options
+    #     :param str conversion_id:
+    #         An ID uniquely identifying the conversion for the remote rendering account. The ID is case sensitive, can
+    #         contain any combination of alphanumeric characters including hyphens and underscores, and cannot contain
+    #         more than 256 characters.
+    #     :param conversion_options: ~azure.mixedreality.remoterendering.ConversionSettings
+    #     :return: A poller for the created asset conversion
+    #     :rtype:  ~azure.mixedreality.remoterendering.Conversion
+    #     """
+    #     conversion = self._client.create_conversion(
+    #         account_id=self._account_id,
+    #         conversion_id=conversion_id,
+    #         body=CreateConversionSettings(settings=conversion_options),
+    #         **kwargs)
+    #     return conversion
 
-    def get_conversion(self, conversion_id, **kwargs):
-        # type: (str, ConversionSettings], Any) ->  ~azure.core.polling.LROPoller
+    @distributed_trace
+    def get_asset_conversion(self, conversion_id, **kwargs):
+        # type: (str, Any) -> ~azure.mixedreality.remoterendering.Conversion
+        """
+        Retrieve the state of a previously created conversion.
+        :param str conversion_id:
+            The identifier of the conversion to retrieve.
+        :return: Information about the ongoing conversion process.
+        :rtype: ~azure.mixedreality.remoterendering.Conversion
+        """
         conversion = self._client.get_conversion(
-            self._account_id, conversion_id, **kwargs)
+            account_id=self._account_id, conversion_id=conversion_id, **kwargs)
         return conversion
 
-    # TODO: type annotations
-    # TODO: convert generated models to external visible models?
-    def get_conversions(self, **kwargs):
-        return self._client.list_conversions(self._account_id)
+    # TODO: question: what is the return type here?
+    # should i expose ~azure.mixedreality.remoterendering.ConversionList in the module? or wrap this somehow like
+    # _sdk\communication\azure-communication-chat\azure\communication\chat\_chat_thread_client.py
 
-    def begin_rendering_session(self, session_id, size, lease_time_minutes):
+    @distributed_trace
+    def list_asset_conversions(self, **kwargs):
+        # type: (Any) -> ItemPaged[~azure.mixedreality.remoterendering.Conversion]
+        """
+        Gets conversions for the remote rendering account.
+        :return: ItemPaged[:class:'~azure.mixedreality.remoterendering.Conversion']
+        :rtype:  ~azure.core.paging.ItemPaged
+        """
+        return self._client.list_conversions(account_id=self._account_id, **kwargs)
+
+    @distributed_trace
+    def begin_rendering_session(self, session_id, size, max_lease_time_minutes, **kwargs):
+        # type: (str, Union[str, SessionSize], int, Any) -> ~azure.core.polling.LROPoller
+        """
+        :param str session_id: An ID uniquely identifying the rendering session for the given account. The ID is case
+            sensitive, can contain any combination of alphanumeric characters including hyphens and underscores, and
+            cannot contain more than 256 characters.
+        :param size: Size of the server used for the rendering session. Remote Rendering with Standard size server has
+            a maximum scene size of 20 million polygons. Remote Rendering with Premium size does not enforce a hard
+            maximum, but performance may be degraded if your content exceeds the rendering capabilities of the service.
+        :param int max_lease_time_minutes: The time in minutes the session will run after reaching the 'Ready' state.
+        :type size: str or ~azure.mixedreality.remoterendering.SessionSize
+        """
         settings = CreateSessionSettings(
-            size=size, max_lease_time_minutes=lease_time_minutes)
+            size=size, max_lease_time_minutes=max_lease_time_minutes)
         initial_state = self._client.create_session(
-            account_id=self._account_id, session_id=session_id, body=settings)
+            account_id=self._account_id,
+            session_id=session_id,
+            body=settings,
+            **kwargs)
         polling_method = SessionPolling(account_id=self._account_id, is_terminated=lambda status: status in [
             SessionStatus.EXPIRED,
             SessionStatus.ERROR,
@@ -216,19 +289,61 @@ class RemoteRenderingClient(object):
         return LROPoller(client=self._client,
                          initial_response=initial_state,
                          deserialization_callback=None,
-                         polling_method=polling_method)
+                         polling_method=polling_method,
+                         **kwargs)
 
-    def stop_rendering_session(self, session_id):
-        self._client.stop_session(self._account_id, session_id)
+    @distributed_trace
+    def get_rendering_session(self, session_id, **kwargs):
+        # type: (str)-> ~azure.mixedreality.remoterendering.SessionProperties
+        '''
+        Returns the properties of a previously generated rendering session.
+        :param str session_id: The identifier of the rendering session.
+        :return: Properties of the rendering session
+        :rtype:  ~azure.mixedreality.remoterendering.SessionProperties
+        '''
+        return self._client.get_session(
+            account_id=self._account_id,
+            session_id=session_id,
+            **kwargs)
 
-    def get_rendering_session(self, session_id):
-        return self._client.get_session(self._account_id, session_id)
+    @distributed_trace
+    def stop_rendering_session(self, session_id, **kwargs):
+        # type:  (str, Any) -> None
+        """
+        :param str session_id: The identifier of the session to be stopped.
+        :return: None
+        :rtype: None
+        """
+        self._client.stop_session(
+            account_id=self._account_id, session_id=session_id, **kwargs)
 
-    def extend_rendering_session(self, session_id, lease_time_minutes):
-        return self._client.update_session(self._account_id, session_id, UpdateSessionSettings(max_lease_time_minutes=lease_time_minutes))
+    @distributed_trace
+    def update_rendering_session(self, session_id, max_lease_time_minutes, **kwargs):
+        # type: (str, int) -> None
+        """
+        Extend the lease time of an already existing rendering session.
+        :param str session_id: The identifier of the session to be extended.
+        :param int max_lease_time_minutes: The new lease time of the rendering session. Has to be strictly larger than
+            the previous lease time.
+        :return: None
+        :rtype: None
+        """
+        return self._client.update_session(account_id=self._account_id,
+                                           session_id=session_id,
+                                           body=UpdateSessionSettings(
+                                               max_lease_time_minutes=max_lease_time_minutes),
+                                           **kwargs)
 
-    def get_renderin_sessions(self, **kwargs):
-        return self._client.list_sessions(self._account_id)
+    @distributed_trace
+    def list_rendering_sessions(self, **kwargs):
+        # type: (Any) -> ItemPaged[~azure.mixedreality.remoterendering.SessionProperties]
+        """
+        List rendering sessions in the 'Ready' or 'Starting' state. Does not return stopped or failed rendering
+            sessions.
+        :return: ItemPaged[:class:'~azure.mixedreality.remoterendering.Conversion']
+        :rtype:  ~azure.core.paging.ItemPaged
+        """
+        return self._client.list_sessions(account_id=self._account_id, **kwargs)
 
     def close(self):
         # type: () -> None
